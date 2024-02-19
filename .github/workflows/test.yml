@@ -1,0 +1,33 @@
+name: Test Action 
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test-save:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test Save
+        id: test
+        uses: ./save
+        with:
+          path: .github
+          key: test-stash
+
+      - name: Check Output
+        env:
+          ID: ${{ steps.test.outputs.stash-id }}
+          URL: ${{ steps.test.outputs.stash-url }} 
+        run: |
+          if [ -z "$ID" -o -z "$URL" ]; then
+            echo "Output empty"
+            exit 1
+          fi
