@@ -1,4 +1,4 @@
-name: Test Action 
+name: Test Action
 
 on:
   pull_request:
@@ -19,15 +19,53 @@ jobs:
         id: test
         uses: ./save
         with:
-          path: .github
-          key: test-stash
+          path: .github/
+          key: test-stash-${{ github.sha }}
+          retention-days: '1'
 
       - name: Check Output
         env:
           ID: ${{ steps.test.outputs.stash-id }}
-          URL: ${{ steps.test.outputs.stash-url }} 
+          URL: ${{ steps.test.outputs.stash-url }}
         run: |
           if [ -z "$ID" -o -z "$URL" ]; then
             echo "Output empty"
             exit 1
           fi
+
+      - name: Check if intra-workflow stash exists
+        id: stash
+        uses: ./restore
+        with:
+          key: test-stash-cross
+          path: test-stash
+
+      - name: Save cross-workflow Stash
+        if: ${{ steps.stash.outputs.stash-hit == 'false' }}
+        uses: ./save
+        with:
+          path: .github/
+          key: test-stash-cross
+          retention-days: '90'
+
+  test-restore:
+    needs: test-save
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test intra-workflow stash
+        uses: ./restore
+        with:
+          key: test-stash-${{ github.sha }}
+          path: intra/.github/
+
+      - run: ls -laR intra
+
+      - name: Test inter-workflow stash
+        uses: ./restore
+        with:
+          key: test-stash-cross
+          path: inter/.github/
+
+      - run: ls -laR inter/

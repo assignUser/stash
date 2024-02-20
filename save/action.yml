@@ -7,7 +7,14 @@ inputs:
     description: 'Stash key.'
     required: true
   path:
-    description: 'A file, directory or wildcard pattern that describes what to upload'
+    description: >
+      A file, directory or wildcard pattern that describes what to upload.
+      For dirs and wildcards some flattening will apply:
+      For wildcards see: https://github.com/actions/upload-artifact?tab=readme-ov-file#upload-using-multiple-paths-and-exclusions
+      For dirs the top level is removed, e.g. with '.github' as the path input, 
+        the artifact will contain the contents of '.github', so adding '.github'
+        as the path in the restore action is necessary. 
+
     required: true
   if-no-files-found:
     description: >
