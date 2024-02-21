@@ -87,6 +87,7 @@ runs:
         STASH_RUN_ID: "${{ steps.cross-repo.outputs.stash_run_id }}"
       run: |
         gh run download $STASH_RUN_ID --name $STASH_NAME --dir "${{ inputs.path }}"
+        echo "Stash downloaded"
 
     - name: Download Stash from current workflow run
       id: download-intra
