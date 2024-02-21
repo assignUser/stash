@@ -4,7 +4,13 @@ author: assignUser
 
 inputs:
   key:
-    description: 'Stash key.'
+    description: >
+      A key to save the stash under, use the same key in the stash/restore as well.
+      The stash will always be saved if this action is run and the path contains files.
+
+      To reduce amount of api calls (1000/h/repo limit) necessary to restore the stash
+      the name of the current branch will be appended to the key.
+
     required: true
   path:
     description: >
@@ -79,7 +85,7 @@ runs:
       id: upload
       uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
       with:
-        name: ${{ inputs.key }}
+        name: ${{ inputs.key }}-${{ github.head_ref || github.ref_name }}
         path: ${{ inputs.path }}
         retention-days: ${{ inputs.retention-days }}
         if-no-files-found: ${{ inputs.if-no-files-found }}
