@@ -4,7 +4,13 @@ author: assignUser
 
 inputs:
   key:
-    description: 'Stash key.'
+    description: >
+      Name of the artifact the stash is stored as. There is no `restore-key`
+      functionality as there is no eviction (only expiry).
+
+      The action checks the current branch for a stash, if there is no match
+      the base branch (only for PRs) is searched. If there is more than one
+      match for any branch the most recently updated stash takes precedent.
     required: true
 
   path:
@@ -63,13 +69,23 @@ runs:
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
           -f name="${{ inputs.key }}" \
+          -f per-page=100 \
           --method=get \
           /repos/${{ github.repository }}/actions/artifacts > res.json
 
         # todo filter for base and current branch
         jq '.artifacts
-              | map(select(.name | test ("${{ inputs.key }}")))
-              | max_by(.updated_at)' res.json > stash.json
+           | map(select(.expired == false and .name == "${{ inputs.key }}"))
+           | group_by(.workflow_run.head_repository_id)
+           | map(max_by(.updated_at | fromdate))
+           | sort_by(.created_at | fromdate )
+           | if length == 0 then {}
+             elif .[1].head_repository_id == 759960986 then .[0]
+             else .[1] end' res.json > stash.json
+
+        # jq '.artifacts
+        #       | map(select(.name | test ("${{ inputs.key }}")))
+        #       | max_by(.updated_at)' res.json > stash.json
 
         stash_name=$(jq '.name // empty' stash.json | tr -d '"')
         if [ -n "$stash_name" ]; then
