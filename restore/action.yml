@@ -75,6 +75,7 @@ runs:
         if [ -n "$stash_name" ]; then
           echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
           echo "stash_run_id=$(jq '.workflow_run.id' stash.json)" >> $GITHUB_OUTPUT
+          echo "Restoring $stash_name from branch $(jq '.workflow_run.head_branch' stash.json)."
         fi
 
     - name: Download Stash from other workflow run
@@ -87,6 +88,8 @@ runs:
         STASH_RUN_ID: "${{ steps.cross-repo.outputs.stash_run_id }}"
       run: |
         gh run download $STASH_RUN_ID --name $STASH_NAME --dir "${{ inputs.path }}"
+        echo "Succesfully restored stash $STASH_NAME for key: ${{ inputs.key }}."
+
 
     - name: Download Stash from current workflow run
       id: download-intra
@@ -106,5 +109,5 @@ runs:
           echo "stash-hit=true" >> $GITHUB_OUTPUT
         else
           echo "stash-hit=false" >> $GITHUB_OUTPUT
-          echo "::notice :: No stash found for key: ${{ inputs.key }}"
+          echo "No stash found for key: ${{ inputs.key }}"
         fi
