@@ -26,6 +26,7 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - run: echo "${{ fromJSON(github.event) }}"
     - name: Check run for artifact
       id: check-stash
       env:
