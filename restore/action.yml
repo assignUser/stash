@@ -27,7 +27,7 @@ runs:
   using: 'composite'
   steps:
     - shell: bash
-      run: echo "${{ toJSON(github.event) }}"
+      run: echo "${{ github.event.pull_request.head.repo.id }}"
     - name: Check run for artifact
       id: check-stash
       env:
