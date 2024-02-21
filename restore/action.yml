@@ -74,18 +74,18 @@ runs:
           /repos/${{ github.repository }}/actions/artifacts > res.json
 
         # todo filter for base and current branch
-        jq '.artifacts
-           | map(select(.expired == false and .name == "${{ inputs.key }}"))
-           | group_by(.workflow_run.head_repository_id)
-           | map(max_by(.updated_at | fromdate))
-           | sort_by(.created_at | fromdate )
-           | if length == 0 then {}
-             elif .[1].head_repository_id == 759960986 then .[0]
-             else .[1] end' res.json > stash.json
-
         # jq '.artifacts
-        #       | map(select(.name | test ("${{ inputs.key }}")))
-        #       | max_by(.updated_at)' res.json > stash.json
+        #    | map(select(.expired == false and .name == "${{ inputs.key }}"))
+        #    | group_by(.workflow_run.head_repository_id)
+        #    | map(max_by(.updated_at | fromdate))
+        #    | sort_by(.created_at | fromdate )
+        #    | if length == 0 then {}
+        #      elif .[1].head_repository_id == 759960986 then .[0]
+        #      else .[1] end' res.json > stash.json
+
+        jq '.artifacts
+              | map(select(.name | test ("${{ inputs.key }}")))
+              | max_by(.updated_at)' res.json > stash.json
 
         stash_name=$(jq '.name // empty' stash.json | tr -d '"')
         if [ -n "$stash_name" ]; then
@@ -110,11 +110,13 @@ runs:
     - name: Download Stash from current workflow run
       id: download-intra
       if: ${{ steps.check-stash.outputs.stash_exists == 'true' }}
+      env:
+        GH_TOKEN: "${{ inputs.token }}"
+        STASH_NAME: "${{ steps.cross-repo.outputs.stash_name }}"
       continue-on-error: true
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ steps.check-stash.outputs.stash_name || inputs.key }}
-        path: ${{ inputs.path }}
+      run: |
+        gh run download $STASH_RUN_ID --name $STASH_NAME --dir "${{ inputs.path }}"
+        echo "Succesfully restored stash $STASH_NAME for key: ${{ inputs.key }}."
 
     - name: Set stash-hit Output
       id: output
