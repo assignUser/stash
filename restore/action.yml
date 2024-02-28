@@ -8,9 +8,12 @@ inputs:
       Name of the artifact the stash is stored as. There is no `restore-key`
       functionality as there is no eviction (only expiry).
 
-      The action checks the current branch for a stash, if there is no match
-      the base branch (only for PRs) is searched. If there is more than one
+      The action checks the current branch for a stash, if there is no match,
+      the base branch(PRs)/default branch is searched. If there is more than one
       match for any branch the most recently updated stash takes precedent.
+
+      To reduce amount of api calls (1000/h/repo limit) the name of the
+      current branch will be appended to the key. Key and branchname will be normalized.
     required: true
 
   path:
@@ -32,102 +35,97 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Check run for artifact
+    - name: Mung Artifact Name
+      id: mung
+      shell: bash
+      env:
+        key: "${{ inputs.key }}"
+        stash_path: "${{ inputs.path }}"
+        ref: "${{ github.ref_name }}"
+        base_ref: "${{ github.base_ref || github.event.repository.default_branch }}"
+      run: |
+        python ${{ github.action_path }}/mung.py -o stash_head
+        python ${{ github.action_path }}/mung.py -o stash_base -r base_ref
+        echo "stash_path=$(python -c 'import os; print(os.path.abspath(os.environ["stash_path"]))')" >> $GITHUB_OUTPUT
+
+    - name: Check for stash artifact
       id: check-stash
       env:
         GH_TOKEN: "${{ inputs.token }}"
       shell: bash
       run: |
+        function get_artifacts() {
+          name=$1
+          file=$2
+          endpoint=${3:-'/repos/${{ github.repository }}/actions/artifacts'}
+
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -f name="$name" \
+            -q '.artifacts | max_by(.updated_at | fromdate)' \
+            --method=get \
+            "$endpoint" > "$file" 
+        }
+
         # Check if an artifact with the same name has been uploaded in the current workflow.
-        # and resolve a glob pattern to an actual name. Most recent hit by "updated_at" is used.
-        gh api \
-          -H "Accept: application/vnd.github+json" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          /repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts > res.json
+        # Most recent hit by "updated_at" is used.
+        get_artifacts '${{ steps.mung.outputs.stash_head }}' \
+                      '/tmp/wf.json' \
+                      '/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts'
 
-        stash_name=$(jq '.artifacts
-                          | map(select(.name | test ("${{ inputs.key }}")))
-                          | max_by(.updated_at)
-                          | .name // empty' res.json | tr -d '"')
+        stash_name=$(jq -r '.name // empty' /tmp/wf.json)
 
         if [ -n "$stash_name" ]; then
-          echo "stash_exists=true" >> $GITHUB_OUTPUT
           echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
-        else
-          echo "stash_exists=false" >> $GITHUB_OUTPUT
+          echo 'stash_run_id=${{ github.run_id }}' >> $GITHUB_OUTPUT
+          echo "Restoring $stash_name from this workflow run." 
+          exit 0
         fi
 
-    - name: Check across repo
-      id: cross-repo
-      if: ${{ steps.check-stash.outputs.stash_exists == 'false' }}
-      env:
-        GH_TOKEN: "${{ inputs.token }}"
-      shell: bash
-      run: |
-        # Check across other workflow runs.
-        gh api \
-          -H "Accept: application/vnd.github+json" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          -f name="${{ inputs.key }}" \
-          -f per-page=100 \
-          --method=get \
-          /repos/${{ github.repository }}/actions/artifacts > res.json
+        # Check across other workflow runs in the current branch.
+        get_artifacts '${{ steps.mung.outputs.stash_head }}' \
+                      '/tmp/branch.json'
 
-        # todo filter for base and current branch
-        # jq '.artifacts
-        #    | map(select(.expired == false and .name == "${{ inputs.key }}"))
-        #    | group_by(.workflow_run.head_repository_id)
-        #    | map(max_by(.updated_at | fromdate))
-        #    | sort_by(.created_at | fromdate )
-        #    | if length == 0 then {}
-        #      elif .[1].head_repository_id == 759960986 then .[0]
-        #      else .[1] end' res.json > stash.json
-
-        jq '.artifacts
-              | map(select(.name | test ("${{ inputs.key }}")))
-              | max_by(.updated_at)' res.json > stash.json
-
-        stash_name=$(jq '.name // empty' stash.json | tr -d '"')
+        stash_name=$(jq -r '.name // empty' /tmp/branch.json)
         if [ -n "$stash_name" ]; then
           echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
-          echo "stash_run_id=$(jq '.workflow_run.id' stash.json)" >> $GITHUB_OUTPUT
-          echo "Restoring $stash_name from branch $(jq '.workflow_run.head_branch' stash.json)."
+          echo "stash_run_id=$(jq '.workflow_run.id' /tmp/branch.json)" >> $GITHUB_OUTPUT
+          echo "Restoring $stash_name from branch $(jq '.workflow_run.head_branch' /tmp/branch.json)."
+          exit 0
         fi
 
-    - name: Download Stash from other workflow run
+        # Check on base/default branch. 
+        get_artifacts '${{ steps.mung.outputs.stash_base }}' \
+                      '/tmp/base.json'
+
+        stash_name=$(jq -r '.name // empty' /tmp/base.json)
+        if [ -n "$stash_name" ]; then
+          echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
+          echo "stash_run_id=$(jq '.workflow_run.id' /tmp/base.json)" >> $GITHUB_OUTPUT
+          echo "Restoring $stash_name from branch $(jq '.workflow_run.head_branch' /tmp/base.json)."
+        fi
+
+    - name: Download Stash
       shell: bash
-      id: download-cross
-      if: ${{ steps.check-stash.outputs.stash_exists == 'false' && steps.cross-repo.outputs.stash_name != ''}}
-      env:
-        GH_TOKEN: "${{ inputs.token }}"
-        STASH_NAME: "${{ steps.cross-repo.outputs.stash_name }}"
-        STASH_RUN_ID: "${{ steps.cross-repo.outputs.stash_run_id }}"
-      run: |
-        gh run download $STASH_RUN_ID --name $STASH_NAME --dir "${{ inputs.path }}"
-        echo "Succesfully restored stash $STASH_NAME for key: ${{ inputs.key }}."
-
-
-    - name: Download Stash from current workflow run
-      id: download-intra
-      if: ${{ steps.check-stash.outputs.stash_exists == 'true' }}
+      id: download
       env:
         GH_TOKEN: "${{ inputs.token }}"
         STASH_NAME: "${{ steps.check-stash.outputs.stash_name }}"
-        STASH_RUN_ID: "${{ github.run_id }}"
-      continue-on-error: true
-      shell: bash
+        STASH_RUN_ID: "${{ steps.check-stash.outputs.stash_run_id }}"
       run: |
-        gh run download $STASH_RUN_ID --name $STASH_NAME --dir "${{ inputs.path }}"
-        echo "Succesfully restored stash $STASH_NAME for key: ${{ inputs.key }}."
+        gh run download $STASH_RUN_ID --name $STASH_NAME --dir "${{ steps.mung.outputs.stash_path }}"
+        echo "Succesfully restored stash $STASH_NAME."
+
 
     - name: Set stash-hit Output
       id: output
       if: ${{ ! cancelled() }}
       shell: bash
       run: |
-        if [ "${{ steps.download-cross.conclusion }}" == "success" -o "${{ steps.download-intra.conclusion }}" == "success" ]; then
+        if [ "${{ steps.download.conclusion }}" == "success" ]; then
           echo "stash-hit=true" >> $GITHUB_OUTPUT
         else
           echo "stash-hit=false" >> $GITHUB_OUTPUT
-          echo "No stash found for key: ${{ inputs.key }}"
+          echo "No stash found for keys ${{ steps.mung.outputs.stash_head }} or ${{ steps.mung.outputs.stash_base }}."
         fi
