@@ -4,7 +4,16 @@ author: assignUser
 
 inputs:
   key:
-    description: 'Stash key.'
+    description: >
+      Name of the artifact the stash is stored as. There is no `restore-key`
+      functionality as there is no eviction (only expiry).
+
+      The action checks the current branch for a stash, if there is no match,
+      the base branch(PRs)/default branch is searched. If there is more than one
+      match for any branch the most recently updated stash takes precedent.
+
+      To reduce amount of api calls (1000/h/repo limit) the name of the 
+      current branch will be appended to the key. Key and branchname will be normalized.
     required: true
   path:
     description: >
@@ -82,7 +91,7 @@ runs:
         key: "${{ inputs.key }}"
         ref: "${{ github.ref_name }}"
       run: |
-        python ${{ github.action_path }}/mung.py
+        python ${{ github.action_path }}/../mung.py
 
     - name: Upload Stash
       id: upload

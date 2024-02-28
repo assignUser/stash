@@ -44,8 +44,8 @@ runs:
         ref: "${{ github.ref_name }}"
         base_ref: "${{ github.base_ref || github.event.repository.default_branch }}"
       run: |
-        python ${{ github.action_path }}/mung.py -o stash_head
-        python ${{ github.action_path }}/mung.py -o stash_base -r base_ref
+        python ${{ github.action_path }}/../mung.py -o stash_head
+        python ${{ github.action_path }}/../mung.py -o stash_base -r base_ref
         echo "stash_path=$(python -c 'import os; print(os.path.abspath(os.environ["stash_path"]))')" >> $GITHUB_OUTPUT
 
     - name: Check for stash artifact
