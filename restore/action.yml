@@ -39,9 +39,9 @@ runs:
       id: mung
       shell: bash
       env:
-        key: "${{ inputs.key }}"
+        stash_key: "${{ inputs.key }}"
         stash_path: "${{ inputs.path }}"
-        ref: "${{ github.ref_name }}"
+        ref_name: "${{ github.ref_name }}"
         base_ref: "${{ github.base_ref || github.event.repository.default_branch }}"
       run: |
         python ${{ github.action_path }}/../mung.py -o stash_head

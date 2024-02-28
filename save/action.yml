@@ -88,8 +88,8 @@ runs:
       id: mung
       shell: bash
       env:
-        key: "${{ inputs.key }}"
-        ref: "${{ github.ref_name }}"
+        stash_key: "${{ inputs.key }}"
+        ref_name: "${{ github.ref_name }}"
       run: |
         python ${{ github.action_path }}/../mung.py
 
