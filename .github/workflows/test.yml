@@ -20,7 +20,7 @@ jobs:
         uses: ./save
         with:
           path: .github/
-          key: test-stash-${{ github.sha }}
+          key: test/stash
           retention-days: '1'
 
       - name: Check Output
@@ -57,7 +57,7 @@ jobs:
       - name: Test intra-workflow stash
         uses: ./restore
         with:
-          key: test-stash-${{ github.sha }}
+          key: test/stash
           path: intra/.github/
 
       - run: ls -laR intra
