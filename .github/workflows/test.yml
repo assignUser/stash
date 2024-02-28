@@ -20,7 +20,8 @@ jobs:
         uses: ./save
         with:
           path: .github/
-          key: test/stash
+          # Create a unique key to test intra workflow artifacts.
+          key: test/stash-${{ github.sha }}
           retention-days: '1'
 
       - name: Check Output
@@ -33,7 +34,7 @@ jobs:
             exit 1
           fi
 
-      - name: Check if intra-workflow stash exists
+      - name: Check if inter-workflow stash exists
         id: stash
         uses: ./restore
         with:
@@ -57,7 +58,7 @@ jobs:
       - name: Test intra-workflow stash
         uses: ./restore
         with:
-          key: test/stash
+          key: test/stash-${{ github.sha }}
           path: intra/.github/
 
       - run: ls -laR intra
