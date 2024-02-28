@@ -75,7 +75,7 @@ runs:
                       '/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts'
 
         stash_name=$(jq -r '.name // empty' /tmp/wf.json)
-
+        echo "::debug :: name=$stash_name"
         if [ -n "$stash_name" ]; then
           echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
           echo 'stash_run_id=${{ github.run_id }}' >> $GITHUB_OUTPUT
@@ -88,6 +88,7 @@ runs:
         get_artifacts '${{ steps.mung.outputs.stash_head }}' \
                       '/tmp/branch.json'
 
+        echo "::debug :: name=$stash_name"
         stash_name=$(jq -r '.name // empty' /tmp/branch.json)
         if [ -n "$stash_name" ]; then
           echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
@@ -101,6 +102,7 @@ runs:
         get_artifacts '${{ steps.mung.outputs.stash_base }}' \
                       '/tmp/base.json'
 
+        echo "::debug :: name=$stash_name"
         stash_name=$(jq -r '.name // empty' /tmp/base.json)
         if [ -n "$stash_name" ]; then
           echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
