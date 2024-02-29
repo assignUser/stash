@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13, macos-14]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }} 
     steps:
       - uses: actions/checkout@v4
 
@@ -38,6 +38,7 @@ jobs:
           retention-days: '1'
 
       - name: Check Output
+        shell: bash
         env:
           ID: ${{ steps.test.outputs.stash-id }}
           URL: ${{ steps.test.outputs.stash-url }}
@@ -69,7 +70,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13, macos-14]
     needs: test-save
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -79,7 +80,8 @@ jobs:
           key: test/stash-${{ matrix.os }}-${{ github.sha }}
           path: intra/.github/
 
-      - run: ls -laR intra
+      - shell: bash
+        run: ls -laR intra
 
       - name: Test inter-workflow stash
         uses: ./restore
@@ -87,4 +89,5 @@ jobs:
           key: test-stash-cross-${{ matrix.os }}
           path: inter/.github/
 
-      - run: ls -laR inter/
+      - shell: bash
+        run: ls -laR inter/
