@@ -61,7 +61,7 @@ runs:
         function get_artifacts() {
           name=$1
           file=$2
-          endpoint=${3:-'/repos/${{ github.repository }}/actions/artifacts'}
+          endpoint=${3:-'repos/${{ github.repository }}/actions/artifacts'}
 
           gh api \
             -H "Accept: application/vnd.github+json" \
@@ -76,7 +76,7 @@ runs:
         # Most recent hit by "updated_at" is used.
         get_artifacts '${{ steps.mung.outputs.stash_head }}' \
                       '/tmp/wf.json' \
-                      '/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts'
+                      'repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts'
 
         stash_name=$(jq -r '.name // empty' /tmp/wf.json)
         echo "::debug :: name=$stash_name"
