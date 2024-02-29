@@ -38,6 +38,7 @@ jobs:
           retention-days: '1'
 
       - name: Check Output
+        shell: bash
         env:
           ID: ${{ steps.test.outputs.stash-id }}
           URL: ${{ steps.test.outputs.stash-url }}
