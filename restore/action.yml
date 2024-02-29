@@ -37,16 +37,20 @@ runs:
   steps:
     - name: Mung Artifact Name
       id: mung
-      shell: bash
+      shell: python
       env:
+        PYTHONPATH: "${{ github.action_path }}/../shared/"
         stash_key: "${{ inputs.key }}"
         stash_path: "${{ inputs.path }}"
         ref_name: "${{ github.ref_name }}"
         base_ref: "${{ github.base_ref || github.event.repository.default_branch }}"
       run: |
-        python ${{ github.action_path }}/../mung.py -o stash_head
-        python ${{ github.action_path }}/../mung.py -o stash_base -r base_ref
-        echo "stash_path=$(python -c 'import os; print(os.path.abspath(os.environ["stash_path"]))')" >> $GITHUB_OUTPUT
+        import os
+        import mung as m
+        m.output_munged_name(output = 'stash_head')
+        m.output_munged_name(ref = 'base_ref', output = 'stash_base')
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+          f.write(f'stash_path={os.path.abspath(os.environ["stash_path"])}' + '\n')
 
     - name: Check for stash artifact
       id: check-stash
