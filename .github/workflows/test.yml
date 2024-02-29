@@ -11,6 +11,11 @@ permissions:
 
 jobs:
   test-save:
+    name: "Test save on ${{ matrix.os }}" 
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +25,7 @@ jobs:
         with:
           path: .github/
           # Create a unique key to test intra workflow artifacts.
-          key: test/stash-${{ github.sha }}
+          key: test/stash-${{ matrix.os }}-${{ github.sha }}
           retention-days: '1'
 
       - name: Test Overwrite
@@ -29,7 +34,7 @@ jobs:
         with:
           path: .github/
           # Create a unique key to test intra workflow artifacts.
-          key: test/stash-${{ github.sha }}
+          key: test/stash-${{ matrix.os }}-${{ github.sha }}
           retention-days: '1'
 
       - name: Check Output
@@ -46,7 +51,7 @@ jobs:
         id: stash
         uses: ./restore
         with:
-          key: test-stash-cross
+          key: test-stash-cross-${{ matrix.os }}
           path: test-stash
 
       - name: Save cross-workflow Stash
@@ -54,10 +59,15 @@ jobs:
         uses: ./save
         with:
           path: .github/
-          key: test-stash-cross
+          key: test-stash-cross-${{ matrix.os }}
           retention-days: '90'
 
   test-restore:
+    name: "Test restore on ${{ matrix.os }}" 
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
     needs: test-save
     runs-on: ubuntu-latest
     steps:
@@ -66,7 +76,7 @@ jobs:
       - name: Test intra-workflow stash
         uses: ./restore
         with:
-          key: test/stash-${{ github.sha }}
+          key: test/stash-${{ matrix.os }}-${{ github.sha }}
           path: intra/.github/
 
       - run: ls -laR intra
@@ -74,7 +84,7 @@ jobs:
       - name: Test inter-workflow stash
         uses: ./restore
         with:
-          key: test-stash-cross
+          key: test-stash-cross-${{ matrix.os }}
           path: inter/.github/
 
       - run: ls -laR inter/
