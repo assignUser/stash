@@ -37,7 +37,7 @@ runs:
   steps:
     - name: Mung Artifact Name
       id: mung
-      shell: python
+      shell: python3 {0}
       env:
         PYTHONPATH: "${{ github.action_path }}/../shared/"
         stash_key: "${{ inputs.key }}"
