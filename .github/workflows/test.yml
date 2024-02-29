@@ -24,6 +24,15 @@ jobs:
           key: test/stash-${{ github.sha }}
           retention-days: '1'
 
+      - name: Test Overwrite
+        id: test
+        uses: ./save
+        with:
+          path: .github/
+          # Create a unique key to test intra workflow artifacts.
+          key: test/stash-${{ github.sha }}
+          retention-days: '1'
+
       - name: Check Output
         env:
           ID: ${{ steps.test.outputs.stash-id }}
