@@ -86,12 +86,14 @@ runs:
   steps:
     - name: Mung Artifact Name
       id: mung
-      shell: bash
+      shell: python 
       env:
+        PYTHONPATH: "${{ github.action_path }}/../shared/"
         stash_key: "${{ inputs.key }}"
         ref_name: "${{ github.ref_name }}"
       run: |
-        python ${{ github.action_path }}/../mung.py
+        import mung as m
+        m.output_munged_name()
 
     - name: Upload Stash
       id: upload
