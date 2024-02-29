@@ -16,7 +16,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Test Save
-        id: test
         uses: ./save
         with:
           path: .github/
