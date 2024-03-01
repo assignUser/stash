@@ -100,7 +100,7 @@ runs:
     - name: Check Check for dependencies
       shell: bash
       run: |
-        which python3 > /dev/null 2>&1 || { echo "::error ::python3 is required for this action"; exit 1;}
+        type -P python3 > /dev/null 2>&1 || echo "::error ::python3 is required for this action" && exit 1
 
     - name: Mung Artifact Name
       id: mung
