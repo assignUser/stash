@@ -23,6 +23,27 @@ permissions:
   contents: read
 
 jobs:
+  test-deps:
+    name: "check for dependencies"
+    runs-on: ubuntu-latest
+    container: quay.io/centos/centos:stream8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run action
+        continue-on-error: true
+        id: fail
+        uses: ./restore
+        with:
+          path: .github 
+          key: this-must-fail
+
+      - name: It did not fail
+        if: ${{ steps.fail.conclusion == 'success' }}
+        run: |
+          echo "::error ::Dependency check should have failed!"
+          exit 1
+
   test-save:
     name: "stash/save on ${{ matrix.os }}" 
     strategy:
