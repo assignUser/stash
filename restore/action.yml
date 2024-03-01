@@ -49,6 +49,7 @@ runs:
   using: 'composite'
   steps:
     - name: Check for dependencies
+      id: check-deps
       shell: bash
       run: |
         function check_dep() {
@@ -161,7 +162,7 @@ runs:
 
     - name: Set stash-hit Output
       id: output
-      if: ${{ ! cancelled() }}
+      if: ${{ ! cancelled() && steps.check-deps.conclusion == 'success' }}
       shell: bash
       run: |
         if [ "${{ steps.download.conclusion }}" == "success" ]; then
