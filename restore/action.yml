@@ -53,7 +53,7 @@ runs:
       run: |
         function check_dep() {
           local cmd=$1
-          which $cmd > /dev/null 2>&1 || { echo "::error ::$cmd is required for this action"; missing_dep=true}
+          $(which $cmd > /dev/null 2>&1|| { echo "::error ::$cmd is required for this action"; missing_dep=true;}
         }
 
         check_dep python3
