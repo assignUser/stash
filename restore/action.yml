@@ -48,6 +48,22 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Check for dependencies
+      shell: bash
+      run: |
+        function check_dep() {
+          local cmd=$1
+          which $cmd > /dev/null 2>&1 || { echo "::error ::$cmd is required for this action"; missing_dep=true}
+        }
+
+        check_dep python3
+        check_dep gh
+        check_dep jq
+
+        if [ "$missing_dep" == "true" ]; then
+          exit 1
+        fi
+
     - name: Mung Artifact Name
       id: mung
       shell: python3 {0}
