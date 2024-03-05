@@ -53,6 +53,10 @@ jobs:
     runs-on: ${{ matrix.os }} 
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Run unittests
+        shell: bash
+        run: python3 restore/test_get_stash.py
 
       - name: Test Save
         uses: ./save

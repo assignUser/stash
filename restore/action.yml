@@ -85,6 +85,7 @@ runs:
     - name: Check for stash artifact
       id: check-stash
       env:
+        PYTHONPATH: "${{ github.action_path }}"
         GH_TOKEN: "${{ inputs.token }}"
         base_repo: "${{ github.repository }}"
         base_repo_id: "${{ github.repository_id }}"
