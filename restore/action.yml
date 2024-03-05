@@ -119,7 +119,7 @@ runs:
 
         gs.print_debug(f"Stash: {stash}")
         if not stash:
-            print(f"Stash not found for key: {env(stash_key)}")
+            print(f"Stash not found for key: {env('stash_key')}")
             gs.set_output("stash_found", "false")
         else:
             gs.set_output("stash_name", stash["name"])
