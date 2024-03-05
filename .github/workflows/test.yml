@@ -35,7 +35,7 @@ jobs:
         id: fail
         uses: ./restore
         with:
-          path: .github 
+          path: .github
           key: this-must-fail
 
       - name: It did not fail
@@ -45,17 +45,19 @@ jobs:
           exit 1
 
   test-save:
-    name: "stash/save on ${{ matrix.os }}" 
+    name: "stash/save on ${{ matrix.os }}"
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13, macos-14]
-    runs-on: ${{ matrix.os }} 
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run unittests
         shell: bash
+        env:
+          GH_TOKEN: "${{ github.token }}"
         run: python3 restore/test_get_stash.py
 
       - name: Test Save
@@ -102,7 +104,7 @@ jobs:
           retention-days: '90'
 
   test-restore:
-    name: "stash/restore on ${{ matrix.os }}" 
+    name: "stash/restore on ${{ matrix.os }}"
     strategy:
       fail-fast: false
       matrix:
