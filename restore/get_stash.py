@@ -17,6 +17,15 @@ import subprocess
 from typing import List
 
 
+def print_debug(msg: str):
+    print(f"::debug::{msg}")
+
+
+def set_output(name: str, value: str):
+    with open(ensure_env_var("GITHUB_OUTPUT"), "a") as f:
+        f.write(f"{name}={value}\n")
+
+
 def ensure_env_var(var: str) -> str:
     value = os.environ.get(var)
     if value is None:
@@ -67,10 +76,10 @@ def get_workflow_stash(repo: str, run_id: str, name: str):
     return ensure_json(res.stdout)
 
 
-def get_branch_stash(repo: str, name: str, branch: str, head_repo_id: int):
+def get_branch_stash(repo: str, name: str, head_branch: str, head_repo_id: int):
     query = f"""
 .artifacts | map(select(
-                .workflow_run.head_branch == "{branch}"
+                .workflow_run.head_branch == "{head_branch}"
                 and .workflow_run.head_repository_id == {head_repo_id}))
            | max_by(.updated_at | fromdate)
     """
