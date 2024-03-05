@@ -68,6 +68,8 @@ def gh_api(endpoint: str, method: str = "get", options: List[str] = []):
 def ensure_json(output: str):
     if len(output) == 0:
         return json.loads("{}")
+    else:
+        return json.loads(output)
 
 
 def get_workflow_stash(repo: str, run_id: str, name: str):
