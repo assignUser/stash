@@ -89,7 +89,7 @@ runs:
         GH_TOKEN: "${{ inputs.token }}"
         base_repo: "${{ github.repository }}"
         base_repo_id: "${{ github.repository_id }}"
-        head_repo_id: "${{ github.event.pull_request.head_repository.id || github.repository.id }}"
+        head_repo_id: "${{ github.event.pull_request.head.repo.id || github.repository_id }}"
         base_ref: "${{ github.base_ref || github.event.repository.default_branch }}"
         head_ref: "${{ github.head_ref || github.ref_name }}"
         base_name: "${{ steps.mung.outputs.stash_base }}"

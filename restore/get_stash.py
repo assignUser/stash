@@ -28,7 +28,7 @@ def set_output(name: str, value: str):
 
 def ensure_env_var(var: str) -> str:
     value = os.environ.get(var)
-    if value is None:
+    if value is None or len(value) == 0:
         raise ValueError(f"Environment variable {var} is not set")
     return value
 
@@ -83,7 +83,7 @@ def get_branch_stash(repo: str, name: str, head_branch: str, head_repo_id: int):
                     and .workflow_run.head_repository_id == {head_repo_id}))
                | max_by(.updated_at | fromdate)
     """
-    query = "".join(query.splitlines())
+    print_debug(f"Query: {query}")
     ops = ["-q", query, "-f", f"name={name}"]
     res = gh_api(f"repos/{repo}/actions/artifacts", options=ops)
     return ensure_json(res.stdout)
@@ -96,7 +96,7 @@ def get_repo_stash(repo: str, name: str, base_branch: str, base_repo_id: int):
                   and .workflow_run.head_repository_id == {base_repo_id}))
                | max_by(.updated_at | fromdate)
     """
-    query = "".join(query.splitlines())
+    print_debug(f"Query: {query}")
     ops = ["-q", query, "-f", f"name={name}"]
     res = gh_api(f"repos/{repo}/actions/artifacts", options=ops)
     return ensure_json(res.stdout)
