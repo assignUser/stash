@@ -67,7 +67,7 @@ def gh_api(endpoint: str, method: str = "get", options: List[str] = []):
 
 
 def ensure_json(output: str):
-    if len(re.sub(output, r"\\s+", "")) == 0:
+    if output.isspace():
         return json.loads("{}")
     else:
         return json.loads(output)
