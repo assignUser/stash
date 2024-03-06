@@ -82,6 +82,7 @@ def get_workflow_stash(repo: str, run_id: str, name: str):
 def get_branch_stash(repo: str, name: str, branch: str, repo_id: int):
     query = f"""
     .artifacts | map(select(
+                    .expired == false and
                     .workflow_run.head_branch == "{branch}"
                     and .workflow_run.head_repository_id == {repo_id}))
                | max_by(.updated_at | fromdate)
