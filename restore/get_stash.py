@@ -89,4 +89,5 @@ def get_branch_stash(repo: str, name: str, branch: str, repo_id: int):
     print_debug(f"Query: {query}")
     ops = ["-q", query, "-f", f"name={name}"]
     res = gh_api(f"repos/{repo}/actions/artifacts", options=ops)
+    print(res.stdout)
     return ensure_json(res.stdout)
