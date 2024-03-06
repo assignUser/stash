@@ -79,24 +79,11 @@ def get_workflow_stash(repo: str, run_id: str, name: str):
     return ensure_json(res.stdout)
 
 
-def get_branch_stash(repo: str, name: str, head_branch: str, head_repo_id: int):
+def get_branch_stash(repo: str, name: str, branch: str, repo_id: int):
     query = f"""
     .artifacts | map(select(
-                    .workflow_run.head_branch == "{head_branch}"
-                    and .workflow_run.head_repository_id == {head_repo_id}))
-               | max_by(.updated_at | fromdate)
-    """
-    print_debug(f"Query: {query}")
-    ops = ["-q", query, "-f", f"name={name}"]
-    res = gh_api(f"repos/{repo}/actions/artifacts", options=ops)
-    return ensure_json(res.stdout)
-
-
-def get_repo_stash(repo: str, name: str, base_branch: str, base_repo_id: int):
-    query = f"""
-    .artifacts | map(select(
-                  .workflow_run.head_branch == "{base_branch}"
-                  and .workflow_run.head_repository_id == {base_repo_id}))
+                    .workflow_run.head_branch == "{branch}"
+                    and .workflow_run.head_repository_id == {repo_id}))
                | max_by(.updated_at | fromdate)
     """
     print_debug(f"Query: {query}")

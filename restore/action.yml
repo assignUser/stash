@@ -115,7 +115,7 @@ runs:
 
         if not stash:
             gs.print_debug(f"Looking for stash {base_name} on base branch.")
-            stash = gs.get_repo_stash(repo, base_name, env("base_ref"), env("base_repo_id"))
+            stash = gs.get_branch_stash(repo, base_name, env("base_ref"), env("base_repo_id"))
 
         gs.print_debug(f"Stash: {stash}")
         if not stash:
