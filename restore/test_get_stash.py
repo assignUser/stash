@@ -38,7 +38,7 @@ class TestGetStash(unittest.TestCase):
         # use the actual response from gh_api to guard against changes in the API
         res = gh_api("rate_limit", options=["-q", ".resources.cre.limit"])
         count = ensure_json(res.stdout)
-        self.assertIsNone(count)
+        self.assertDictEqual(count, {})
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,6 +13,7 @@
 # limitations under the License.
 import json
 import os
+import re
 import subprocess
 from typing import List
 
@@ -66,7 +67,7 @@ def gh_api(endpoint: str, method: str = "get", options: List[str] = []):
 
 
 def ensure_json(output: str):
-    if len(output) == 0:
+    if len(re.sub(output, r"\\s+", "")) == 0:
         return json.loads("{}")
     else:
         return json.loads(output)
