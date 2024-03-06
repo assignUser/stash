@@ -35,7 +35,7 @@ def ensure_env_var(var: str) -> str:
 
 
 def run_checked(args, **kwargs):
-    result = subprocess.run(args, **kwargs, capture_output=True, check=True, text=True)
+    result = subprocess.run(args, capture_output=True, check=True, text=True, **kwargs)
     return result
 
 
