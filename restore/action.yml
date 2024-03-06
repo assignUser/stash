@@ -48,6 +48,23 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Check for dependencies
+      id: check-deps
+      shell: bash
+      run: |
+        function check_dep() {
+          local cmd=$1
+          $(type -P $cmd > /dev/null 2>&1) || { echo "::error ::$cmd is required for this action"; missing_dep=true; }
+        }
+
+        check_dep python3
+        check_dep gh
+        check_dep jq
+
+        if [ "$missing_dep" == "true" ]; then
+          exit 1
+        fi
+
     - name: Mung Artifact Name
       id: mung
       shell: python3 {0}
@@ -68,67 +85,48 @@ runs:
     - name: Check for stash artifact
       id: check-stash
       env:
+        PYTHONPATH: "${{ github.action_path }}"
         GH_TOKEN: "${{ inputs.token }}"
-      shell: bash
+        base_repo: "${{ github.repository }}"
+        base_repo_id: "${{ github.repository_id }}"
+        head_repo_id: "${{ github.event.pull_request.head.repo.id || github.repository_id }}"
+        base_ref: "${{ github.base_ref || github.event.repository.default_branch }}"
+        head_ref: "${{ github.head_ref || github.ref_name }}"
+        base_name: "${{ steps.mung.outputs.stash_base }}"
+        head_name: "${{ steps.mung.outputs.stash_head }}"
+        run_id: "${{ github.run_id }}"
+        stash_key: "${{ inputs.key }}"
+
+      shell: python3 {0}
       run: |
-        function get_artifacts() {
-          name=$1
-          file=$2
-          endpoint=${3:-'repos/${{ github.repository }}/actions/artifacts'}
+        import get_stash as gs
 
-          gh api \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -f name="$name" \
-            -q '.artifacts | max_by(.updated_at | fromdate)' \
-            --method=get \
-            "$endpoint" > "$file"
-        }
+        env = gs.ensure_env_var
+        repo = env("base_repo")
+        head_name = env("head_name")
+        base_name = env("base_name")
 
-        # Check if an artifact with the same name has been uploaded in the current workflow.
-        # Most recent hit by "updated_at" is used.
-        get_artifacts '${{ steps.mung.outputs.stash_head }}' \
-                      '/tmp/wf.json' \
-                      'repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts'
 
-        stash_name=$(jq -r '.name // empty' /tmp/wf.json)
-        echo "::debug :: name=$stash_name"
-        if [ -n "$stash_name" ]; then
-          echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
-          echo 'stash_run_id=${{ github.run_id }}' >> $GITHUB_OUTPUT
-          echo "Restoring $stash_name from this workflow run."
-          exit 0
-        fi
+        stash = gs.get_workflow_stash(repo, env("run_id"), head_name)
 
-        echo "::debug ::Checking cross workflow"
-        # Check across other workflow runs in the current branch.
-        get_artifacts '${{ steps.mung.outputs.stash_head }}' \
-                      '/tmp/branch.json'
+        if not stash:
+            gs.print_debug(f"Looking for stash {head_name} on current branch.")
+            stash = gs.get_branch_stash(repo, head_name, env("head_ref"), env("head_repo_id"))
 
-        echo "::debug :: name=$stash_name"
-        stash_name=$(jq -r '.name // empty' /tmp/branch.json)
-        if [ -n "$stash_name" ]; then
-          echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
-          echo "stash_run_id=$(jq '.workflow_run.id' /tmp/branch.json)" >> $GITHUB_OUTPUT
-          echo "Restoring $stash_name from branch $(jq '.workflow_run.head_branch' /tmp/branch.json)."
-          exit 0
-        fi
+        if not stash:
+            gs.print_debug(f"Looking for stash {base_name} on base branch.")
+            stash = gs.get_branch_stash(repo, base_name, env("base_ref"), env("base_repo_id"))
 
-        echo "::debug ::Checking in base branch"
-        # Check on base/default branch.
-        get_artifacts '${{ steps.mung.outputs.stash_base }}' \
-                      '/tmp/base.json'
-
-        echo "::debug :: name=$stash_name"
-        stash_name=$(jq -r '.name // empty' /tmp/base.json)
-        if [ -n "$stash_name" ]; then
-          echo "stash_name=$stash_name" >> $GITHUB_OUTPUT
-          echo "stash_run_id=$(jq '.workflow_run.id' /tmp/base.json)" >> $GITHUB_OUTPUT
-          echo "Restoring $stash_name from branch $(jq '.workflow_run.head_branch' /tmp/base.json)."
-          exit 0
-        fi
-
-        echo "stash_found=false" >> $GITHUB_OUTPUT
+        gs.print_debug(f"Stash: {stash}")
+        if not stash:
+            print(f"Stash not found for key: {env('stash_key')}")
+            gs.set_output("stash_found", "false")
+        else:
+            gs.set_output("stash_name", stash["name"])
+            gs.set_output("stash_run_id", stash["workflow_run"]["id"])
+            print(
+                f"Restoring {stash['name']} from branch {stash['workflow_run']['head_branch']}."
+            )
 
     - name: Download Stash
       shell: bash
@@ -145,7 +143,7 @@ runs:
 
     - name: Set stash-hit Output
       id: output
-      if: ${{ ! cancelled() }}
+      if: ${{ ! cancelled() && steps.check-deps.conclusion == 'success' }}
       shell: bash
       run: |
         if [ "${{ steps.download.conclusion }}" == "success" ]; then

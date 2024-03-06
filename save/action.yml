@@ -25,7 +25,7 @@ inputs:
       the base branch(PRs)/default branch is searched. If there is more than one
       match for any branch the most recently updated stash takes precedent.
 
-      To reduce amount of api calls (1000/h/repo limit) the name of the 
+      To reduce amount of api calls (1000/h/repo limit) the name of the
       current branch will be appended to the key. Key and branchname will be normalized.
     required: true
   path:
@@ -97,6 +97,11 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Check Check for dependencies
+      shell: bash
+      run: |
+        type -P python3 > /dev/null 2>&1 || { echo "::error ::python3 is required for this action"; exit 1; }
+
     - name: Mung Artifact Name
       id: mung
       shell: python3 {0}
