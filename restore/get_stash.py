@@ -76,6 +76,7 @@ def ensure_json(output: str):
 def get_workflow_stash(repo: str, run_id: str, name: str):
     ops = ["-q", ".artifacts | max_by(.updated_at | fromdate)", "-f", f"name={name}"]
     res = gh_api(f"repos/{repo}/actions/runs/{run_id}/artifacts", options=ops)
+    print_debug(f"Returned stash: {res.stdout}")
     return ensure_json(res.stdout)
 
 
@@ -87,8 +88,7 @@ def get_branch_stash(repo: str, name: str, branch: str, repo_id: int):
                     and .workflow_run.head_repository_id == {repo_id}))
                | max_by(.updated_at | fromdate)
     """
-    print_debug(f"Query: {query}")
     ops = ["-q", query, "-f", f"name={name}"]
     res = gh_api(f"repos/{repo}/actions/artifacts", options=ops)
-    print(res.stdout)
+    print_debug(f"Returned stash: {res.stdout}")
     return ensure_json(res.stdout)
