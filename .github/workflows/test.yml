@@ -71,6 +71,8 @@ jobs:
           retention-days: '1'
            
       - name: Show rate limit
+        env:
+          GH_TOKEN: "${{ github.token }}"
         run: gh api -q '.rate' rate_limit
 
       - name: Test Overwrite
@@ -83,6 +85,8 @@ jobs:
           retention-days: '1'
 
       - name: Show rate limit
+        env:
+          GH_TOKEN: "${{ github.token }}"
         run: gh api -q '.rate' rate_limit
 
       - name: Check Output
@@ -104,6 +108,8 @@ jobs:
           path: test-stash
 
       - name: Show rate limit
+        env:
+          GH_TOKEN: "${{ github.token }}"
         run: gh api -q '.rate' rate_limit
 
       - name: Save cross-workflow Stash
