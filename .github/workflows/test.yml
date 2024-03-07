@@ -69,6 +69,9 @@ jobs:
           # Create a unique key to test intra workflow artifacts.
           key: test/stash-${{ matrix.os }}-${{ github.sha }}
           retention-days: '1'
+           
+      - name: Show rate limit
+        run: gh api -q '.rate' rate_limit
 
       - name: Test Overwrite
         id: test
@@ -78,6 +81,9 @@ jobs:
           # Create a unique key to test intra workflow artifacts.
           key: test/stash-${{ matrix.os }}-${{ github.sha }}
           retention-days: '1'
+
+      - name: Show rate limit
+        run: gh api -q '.rate' rate_limit
 
       - name: Check Output
         shell: bash
@@ -96,6 +102,9 @@ jobs:
         with:
           key: test-stash-cross-${{ matrix.os }}
           path: test-stash
+
+      - name: Show rate limit
+        run: gh api -q '.rate' rate_limit
 
       - name: Save cross-workflow Stash
         if: ${{ steps.stash.outputs.stash-hit == 'false' }}
