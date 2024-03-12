@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-name: "Stash - restore"
+name: "Stash - Restore"
 description: "Restore you build cache stash."
 author: assignUser
 
@@ -136,8 +136,10 @@ runs:
         GH_TOKEN: "${{ inputs.token }}"
         STASH_NAME: "${{ steps.check-stash.outputs.stash_name }}"
         STASH_RUN_ID: "${{ steps.check-stash.outputs.stash_run_id }}"
+        REPO: "${{ github.repository }}"
+        STASH_DIR: "${{ steps.mung.outputs.stash_path }}"
       run: |
-        gh run download $STASH_RUN_ID --name $STASH_NAME --dir "${{ steps.mung.outputs.stash_path }}"
+        gh run download $STASH_RUN_ID --name $STASH_NAME --dir "$STASH_DIR" -R "$REPO"
         echo "Succesfully restored stash $STASH_NAME."
 
 
