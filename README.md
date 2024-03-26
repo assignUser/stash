@@ -16,7 +16,7 @@
 
 # Stash GitHub Action
 
-`Stash` provides a solution for managing large build caches in your workflows, that doesn't require any secrets and can be used in fork PRs. It's designed as an alternative to `actions/cache` which struggles with big build caches such as `.ccache` directories. This action is split into two distinct operations: `assign/user/restore` for fetching previously stored caches, and `assignUser/stash/save` for storing new caches after a build has been completed.
+`Stash` provides a solution for managing large build caches in your workflows, that doesn't require any secrets and can be used in fork PRs. It's designed as an alternative to `actions/cache` which struggles with big build caches such as `.ccache` directories. This action is split into two distinct operations: `assign/user/restore` for fetching a previously stored stash, and `assignUser/stash/save` for storing a new stash after a build has been completed.
 
 ## Features
 
@@ -31,7 +31,7 @@
 > [!IMPORTANT]
 > You have to explicitly save your stash by using `assignUser/stash/save` action, it will not be saved automatically by using `assignUser/stash/restore`.
 
-To restore a cache before your build process, use the `assignUser/stash/restore` action in your workflow:
+To restore a stash before your build process, use the `assignUser/stash/restore` action in your workflow:
 
 
 ```yaml
@@ -43,7 +43,7 @@ steps:
     path: 'path/to/cache'
 ```
 
-After your build completes, save the cache using the `assignUser/stash/save` action:
+After your build completes, save the stash using the `assignUser/stash/save` action:
 
 ```yaml
 steps:
@@ -56,9 +56,9 @@ Stashes will expire after 5 days by default. You can set this from 1-90 days wit
 
 ### Inputs and Outputs
 
-Each action (restore and save) has specific inputs tailored to its functionality, they are specifically modeled after `actions/cache` and `actions/upload-artifact` to provide a drop in replacement. Please refer to the action metadata (action.yml) for a comprehensive list of inputs, including descriptions and default values.
+Each action (restore and save) has specific inputs tailored to its functionality, they are specifically modeled after `actions/cache` and `actions/upload-artifact` to provide a drop in replacement. Please refer to the action metadata (`action.yml`) for a comprehensive list of inputs, including descriptions and default values.
 
-Additionally `restore` action has an output `stash-hit` which is set to `true` (as a **string** so use `if: ${{ steps.restore-stash.outputs.stash-hit == 'true' }}`!) if the cache was restored successfully, `false` if no cache was restored and '' if the action failed (an error will be thrown unless `continue-on-error` is set).
+Additionally the `restore` action has an output `stash-hit` which is set to `true` (as a **string** so use `if: ${{ steps.restore-stash.outputs.stash-hit == 'true' }}`!) if the cache was restored successfully, `false` if no cache was restored and '' if the action failed (an error will be thrown unless `continue-on-error` is set).
 
 ## Contributing
 
