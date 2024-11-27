@@ -65,7 +65,7 @@ jobs:
       - name: Test Save
         uses: ./save
         with:
-          path: .github/
+          path: shared/
           # Create a unique key to test intra workflow artifacts.
           key: test/stash-${{ matrix.os }}-${{ github.sha }}
           retention-days: '1'
@@ -79,7 +79,7 @@ jobs:
         id: test
         uses: ./save
         with:
-          path: .github/
+          path: shared/
           # Create a unique key to test intra workflow artifacts.
           key: test/stash-${{ matrix.os }}-${{ github.sha }}
           retention-days: '1'
@@ -116,7 +116,7 @@ jobs:
         if: ${{ steps.stash.outputs.stash-hit == 'false' }}
         uses: ./save
         with:
-          path: .github/
+          path: shared/
           key: test-stash-cross-${{ matrix.os }}
           retention-days: '90'
 
@@ -135,7 +135,7 @@ jobs:
         uses: ./restore
         with:
           key: test/stash-${{ matrix.os }}-${{ github.sha }}
-          path: intra/.github/
+          path: intra/shared/
 
       - shell: bash
         run: ls -laR intra
@@ -144,7 +144,7 @@ jobs:
         uses: ./restore
         with:
           key: test-stash-cross-${{ matrix.os }}
-          path: inter/.github/
+          path: inter/shared/
 
       - shell: bash
         run: ls -laR inter/
