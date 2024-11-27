@@ -150,7 +150,7 @@ runs:
 
     - name: Set stash-hit Output
       id: output
-      if: ${{ ! cancelled() }}
+      if: ${{ ! cancelled() && steps.check-deps.conclusion == 'success'}}
       shell: bash
       run: |
         if [ "${{ steps.download.outputs.download }}" == "success" ]; then
