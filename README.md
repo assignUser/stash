@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 -->
+> [!WARNING]
+> This action is now maintained [here](https://github.com/apache/infrastructure-actions/tree/main/stash).
+> Please update your workflows accordingly, this repo is now archived and will be removed at some point.
 
 # Stash GitHub Action
 
